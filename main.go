@@ -60,7 +60,7 @@ func main() {
 		for _, part := range pathParts {
 			currentPath = filepath.Join(currentPath, part)
 			cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("mkdir %s", currentPath))
-			fmt.Printf("Comando a ejecutar: %s\n", cmd.String())
+			fmt.Printf("Comando a ejecutar: \"%s\"\n", cmd.String())
 			cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 			output, err := cmd.CombinedOutput()
 			if err != nil {
