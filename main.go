@@ -55,9 +55,9 @@ func main() {
 		fmt.Println("Conectando al SMB...")
 		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("mkdir %s", basePath))
 		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
-		err = cmd.Run()
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("Error al crear las carpetas en el servidor SMB:", err)
+			fmt.Printf("Error al crear las carpetas en el servidor SMB: %s\n", string(output))
 			services.RemoveFiles()
 			return
 		}
@@ -65,9 +65,9 @@ func main() {
 		fmt.Println("Subiendo archivo .cer al SMB...")
 		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
 		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
-		err = cmd.Run()
+		output, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("Error al subir el archivo .cer al servidor SMB:", err)
+			fmt.Printf("Error al subir el archivo .cer al servidor SMB: %s\n", string(output))
 			services.RemoveFiles()
 			return
 		}
@@ -75,9 +75,9 @@ func main() {
 		fmt.Println("Subiendo archivo .key al SMB...")
 		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.key %s/archivo.key", basePath))
 		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
-		err = cmd.Run()
+		output, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("Error al subir el archivo .key al servidor SMB:", err)
+			fmt.Printf("Error al subir el archivo .key al servidor SMB: %s\n", string(output))
 			services.RemoveFiles()
 			return
 		}
