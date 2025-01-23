@@ -51,23 +51,30 @@ func main() {
 		}
 
 		basePath := filepath.Join("cfdi", fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid), "generales")
+		pathParts := []string{"cfdi", fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid), "generales"}
 
 		fmt.Println("Conectando al SMB...")
-		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("\"mkdir %s\"", basePath))
-		fmt.Println("Comando a ejecutar: ", cmd.String())
-		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Error al crear las carpetas en el servidor SMB: %s\n", string(output))
-			services.RemoveFiles()
-			return
+
+		// Crear las carpetas de manera secuencial
+		currentPath := ""
+		for _, part := range pathParts {
+			currentPath = filepath.Join(currentPath, part)
+			cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("mkdir %s", currentPath))
+			fmt.Println("Comando a ejecutar: ", cmd.String())
+			cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error al crear la carpeta %s en el servidor SMB: %s\n", currentPath, string(output))
+				services.RemoveFiles()
+				return
+			}
 		}
 
 		fmt.Println("Subiendo archivo .cer al SMB...")
-		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
+		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
 		fmt.Println("Comando a ejecutar: ", cmd.String())
 		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
-		output, err = cmd.CombinedOutput()
+		output, err := cmd.CombinedOutput()
 		if err != nil {
 			fmt.Printf("Error al subir el archivo .cer al servidor SMB: %s\n", string(output))
 			services.RemoveFiles()
