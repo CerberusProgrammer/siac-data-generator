@@ -24,7 +24,7 @@ func main() {
 
 	flag.Parse()
 
-	if !utils.ValidParams(*url, *token, *rfc, *aplicacion, *cltid, *perid) {
+	if !utils.ValidParams(*url, *token, *rfc, *aplicacion, fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid)) {
 		fmt.Println("Parametros invalidos")
 		return
 	}
