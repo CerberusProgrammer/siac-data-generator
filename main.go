@@ -64,6 +64,7 @@ func main() {
 
 		fmt.Println("Subiendo archivo .cer al SMB...")
 		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
+		fmt.Println("Comando a ejecutar: ", cmd.String())
 		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 		output, err = cmd.CombinedOutput()
 		if err != nil {
