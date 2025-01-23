@@ -51,10 +51,10 @@ func main() {
 		}
 
 		basePath := filepath.Join("cfdi", fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid), "generales")
-		remotePath := fmt.Sprintf("%s/%s", *smbPath, basePath)
 
-		cmd := exec.Command("cmd", "/C", fmt.Sprintf("mkdir %s", remotePath))
-		cmd.Env = append(os.Environ(), fmt.Sprintf("USER=%s", *smbUser), fmt.Sprintf("PASS=%s", *smbPass))
+		fmt.Println("Conectando al SMB...")
+		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("mkdir %s", basePath))
+		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 		err = cmd.Run()
 		if err != nil {
 			fmt.Println("Error al crear las carpetas en el servidor SMB:", err)
@@ -62,8 +62,9 @@ func main() {
 			return
 		}
 
-		cmd = exec.Command("cmd", "/C", fmt.Sprintf("copy archivo.cer %s", remotePath))
-		cmd.Env = append(os.Environ(), fmt.Sprintf("USER=%s", *smbUser), fmt.Sprintf("PASS=%s", *smbPass))
+		fmt.Println("Subiendo archivo .cer al SMB...")
+		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
+		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 		err = cmd.Run()
 		if err != nil {
 			fmt.Println("Error al subir el archivo .cer al servidor SMB:", err)
@@ -71,8 +72,9 @@ func main() {
 			return
 		}
 
-		cmd = exec.Command("cmd", "/C", fmt.Sprintf("copy archivo.key %s", remotePath))
-		cmd.Env = append(os.Environ(), fmt.Sprintf("USER=%s", *smbUser), fmt.Sprintf("PASS=%s", *smbPass))
+		fmt.Println("Subiendo archivo .key al SMB...")
+		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.key %s/archivo.key", basePath))
+		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 		err = cmd.Run()
 		if err != nil {
 			fmt.Println("Error al subir el archivo .key al servidor SMB:", err)
@@ -81,7 +83,6 @@ func main() {
 		}
 
 		fmt.Println("Archivos subidos exitosamente al servidor SMB")
-		services.RemoveFiles()
 	} else {
 		fmt.Println("No data found")
 	}
