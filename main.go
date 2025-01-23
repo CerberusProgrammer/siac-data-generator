@@ -56,7 +56,6 @@ func main() {
 
 		fmt.Println("Conectando al SMB...")
 
-		// Crear un archivo de autenticación temporal
 		authFileContent := fmt.Sprintf("username = %s\npassword = %s\n", *smbUser, *smbPass)
 		authFile, err := ioutil.TempFile("", "smb_auth_")
 		if err != nil {
@@ -71,7 +70,6 @@ func main() {
 		}
 		authFile.Close()
 
-		// Crear las carpetas de manera secuencial
 		currentPath := ""
 		for _, part := range pathParts {
 			currentPath = filepath.Join(currentPath, part)
