@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,13 +56,27 @@ func main() {
 
 		fmt.Println("Conectando al SMB...")
 
+		// Crear un archivo de autenticación temporal
+		authFileContent := fmt.Sprintf("username = %s\npassword = %s\n", *smbUser, *smbPass)
+		authFile, err := ioutil.TempFile("", "smb_auth_")
+		if err != nil {
+			fmt.Println("Error al crear el archivo de autenticación:", err)
+			return
+		}
+		defer os.Remove(authFile.Name())
+
+		if _, err := authFile.Write([]byte(authFileContent)); err != nil {
+			fmt.Println("Error al escribir en el archivo de autenticación:", err)
+			return
+		}
+		authFile.Close()
+
 		// Crear las carpetas de manera secuencial
 		currentPath := ""
 		for _, part := range pathParts {
 			currentPath = filepath.Join(currentPath, part)
-			cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("\"mkdir %s\"", currentPath))
+			cmd := exec.Command("smbclient", *smbPath, "-A", authFile.Name(), "-c", fmt.Sprintf("mkdir %s", currentPath))
 			fmt.Printf("Comando a ejecutar: %s\n", cmd.String())
-			cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				fmt.Printf("Error al crear la carpeta %s en el servidor SMB: %s\n", currentPath, string(output))
@@ -71,9 +86,8 @@ func main() {
 		}
 
 		fmt.Println("Subiendo archivo .cer al SMB...")
-		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
+		cmd := exec.Command("smbclient", *smbPath, "-A", authFile.Name(), "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
 		fmt.Println("Comando a ejecutar: ", cmd.String())
-		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			fmt.Printf("Error al subir el archivo .cer al servidor SMB: %s\n", string(output))
@@ -82,8 +96,7 @@ func main() {
 		}
 
 		fmt.Println("Subiendo archivo .key al SMB...")
-		cmd = exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("put archivo.key %s/archivo.key", basePath))
-		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
+		cmd = exec.Command("smbclient", *smbPath, "-A", authFile.Name(), "-c", fmt.Sprintf("put archivo.key %s/archivo.key", basePath))
 		output, err = cmd.CombinedOutput()
 		if err != nil {
 			fmt.Printf("Error al subir el archivo .key al servidor SMB: %s\n", string(output))
