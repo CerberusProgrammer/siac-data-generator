@@ -53,7 +53,7 @@ func main() {
 		basePath := filepath.Join("cfdi", fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid), "generales")
 
 		fmt.Println("Conectando al SMB...")
-		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("mkdir %s", basePath))
+		cmd := exec.Command("smbclient", *smbPath, "-U", *smbUser, "-c", fmt.Sprintf("\"mkdir %s\"", basePath))
 		fmt.Println("Comando a ejecutar: ", cmd.String())
 		cmd.Env = append(os.Environ(), fmt.Sprintf("PASS=%s", *smbPass))
 		output, err := cmd.CombinedOutput()
