@@ -102,4 +102,5 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/upload", uploadHandler)
 	http.ListenAndServe(":8010", nil)
+	fmt.Println("Server running on port 8010")
 }
