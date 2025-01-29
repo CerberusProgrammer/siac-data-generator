@@ -25,13 +25,13 @@ func main() {
 	flag.Parse()
 
 	if !utils.ValidParams(*url, *token, *rfc, *aplicacion, fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid)) {
-		fmt.Println("Parametros invalidos")
+		fmt.Println("Invalid parameters")
 		return
 	}
 
 	response, err := services.GetFiscalData(*url, *token, *rfc, *aplicacion)
 	if err != nil {
-		fmt.Println("Error al obtener la informacion fisca;:", err)
+		fmt.Println("Error retrieving fiscal data:", err)
 		return
 	}
 
@@ -41,31 +41,31 @@ func main() {
 
 		err = utils.DecodeBase64AndSaveIntoCustomFile("archivo.cer", certificado)
 		if err != nil {
-			fmt.Println("Error al guardar el Certificado:", err)
+			fmt.Println("Error saving certificate:", err)
 			return
 		}
 
 		err = utils.DecodeBase64AndSaveIntoCustomFile("archivo.key", llavePrivada)
 		if err != nil {
-			fmt.Println("Error al guardar la LlavePrivada:", err)
+			fmt.Println("Error saving private key:", err)
 			return
 		}
 
 		basePath := filepath.Join("cfdi", fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid), "generales")
 		pathParts := []string{"cfdi", fmt.Sprintf("%d", *cltid), fmt.Sprintf("%d", *perid), "generales"}
 
-		fmt.Println("Conectando al SMB...")
+		fmt.Println("Connecting to SMB...")
 
 		authFileContent := fmt.Sprintf("username = %s\npassword = %s\n", *smbUser, *smbPass)
 		authFile, err := ioutil.TempFile("", "smb_auth_")
 		if err != nil {
-			fmt.Println("Error al crear el archivo de autenticación:", err)
+			fmt.Println("Error creating auth file:", err)
 			return
 		}
 		defer os.Remove(authFile.Name())
 
 		if _, err := authFile.Write([]byte(authFileContent)); err != nil {
-			fmt.Println("Error al escribir en el archivo de autenticación:", err)
+			fmt.Println("Error writing to auth file:", err)
 			return
 		}
 		authFile.Close()
@@ -74,35 +74,33 @@ func main() {
 		for _, part := range pathParts {
 			currentPath = filepath.Join(currentPath, part)
 			cmd := exec.Command("smbclient", *smbPath, "-A", authFile.Name(), "-c", fmt.Sprintf("mkdir %s", currentPath))
-			fmt.Printf("Comando a ejecutar: %s\n", cmd.String())
 			output, err := cmd.CombinedOutput()
 			if err != nil {
-				fmt.Printf("Error al crear la carpeta %s en el servidor SMB: %s\n", currentPath, string(output))
+				fmt.Printf("Error creating directory %s on SMB server: %s\n", currentPath, string(output))
 				services.RemoveFiles()
 				return
 			}
 		}
 
-		fmt.Println("Subiendo archivo .cer al SMB...")
+		fmt.Println("Uploading .cer file to SMB...")
 		cmd := exec.Command("smbclient", *smbPath, "-A", authFile.Name(), "-c", fmt.Sprintf("put archivo.cer %s/archivo.cer", basePath))
-		fmt.Println("Comando a ejecutar: ", cmd.String())
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("Error al subir el archivo .cer al servidor SMB: %s\n", string(output))
+			fmt.Printf("Error uploading .cer file to SMB server: %s\n", string(output))
 			services.RemoveFiles()
 			return
 		}
 
-		fmt.Println("Subiendo archivo .key al SMB...")
+		fmt.Println("Uploading .key file to SMB...")
 		cmd = exec.Command("smbclient", *smbPath, "-A", authFile.Name(), "-c", fmt.Sprintf("put archivo.key %s/archivo.key", basePath))
 		output, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("Error al subir el archivo .key al servidor SMB: %s\n", string(output))
+			fmt.Printf("Error uploading .key file to SMB server: %s\n", string(output))
 			services.RemoveFiles()
 			return
 		}
 
-		fmt.Println("Archivos subidos exitosamente al servidor SMB")
+		fmt.Println("Files uploaded successfully to SMB server")
 	} else {
 		fmt.Println("No data found")
 	}
